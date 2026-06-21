@@ -1,5 +1,12 @@
-import type { FastifyInstance } from "fastify";
+import type { FastifyInstance, FastifyReply } from "fastify";
 import { UserRole } from "@event-booking/types";
+import {
+  createEventRouteSchema,
+  deleteEventRouteSchema,
+  getEventRouteSchema,
+  listEventsRouteSchema,
+  updateEventRouteSchema,
+} from "../../docs/openapi.js";
 import { authenticate, getAuthUser } from "../../middleware/authenticate.js";
 import { authorize } from "../../middleware/authorize.js";
 import {
@@ -16,25 +23,20 @@ export async function eventsRoutes(app: FastifyInstance) {
     "/",
     {
       preHandler: [authenticate, authorize(UserRole.ORGANIZER)],
-      schema: {
-        tags: ["Events"],
-        security: [{ bearerAuth: [] }],
-      },
+      schema: createEventRouteSchema,
     },
-    async (request) => {
+    async (request, reply: FastifyReply) => {
       const input = createEventSchema.parse(request.body);
       const user = getAuthUser(request);
       const event = await eventsService.create(user.userId, input);
 
-      return { success: true, data: event };
+      return reply.status(201).send({ success: true, data: event });
     },
   );
 
   app.get(
     "/",
-    {
-      schema: { tags: ["Events"] },
-    },
+    { schema: listEventsRouteSchema },
     async (request) => {
       const query = listEventsQuerySchema.parse(request.query);
       const result = await eventsService.list(query);
@@ -45,9 +47,7 @@ export async function eventsRoutes(app: FastifyInstance) {
 
   app.get(
     "/:id",
-    {
-      schema: { tags: ["Events"] },
-    },
+    { schema: getEventRouteSchema },
     async (request) => {
       const { id } = request.params as { id: string };
       const event = await eventsService.getById(id);
@@ -60,10 +60,7 @@ export async function eventsRoutes(app: FastifyInstance) {
     "/:id",
     {
       preHandler: [authenticate, authorize(UserRole.ORGANIZER)],
-      schema: {
-        tags: ["Events"],
-        security: [{ bearerAuth: [] }],
-      },
+      schema: updateEventRouteSchema,
     },
     async (request) => {
       const { id } = request.params as { id: string };
@@ -79,10 +76,7 @@ export async function eventsRoutes(app: FastifyInstance) {
     "/:id",
     {
       preHandler: [authenticate, authorize(UserRole.ORGANIZER)],
-      schema: {
-        tags: ["Events"],
-        security: [{ bearerAuth: [] }],
-      },
+      schema: deleteEventRouteSchema,
     },
     async (request) => {
       const { id } = request.params as { id: string };

@@ -1,4 +1,8 @@
 import type { FastifyInstance } from "fastify";
+import {
+  loginRouteSchema,
+  registerRouteSchema,
+} from "../../docs/openapi.js";
 import { registerSchema, loginSchema } from "./auth.schema.js";
 import { AuthService } from "./auth.service.js";
 
@@ -7,21 +11,7 @@ export async function authRoutes(app: FastifyInstance) {
 
   app.post(
     "/register",
-    {
-      schema: {
-        tags: ["Auth"],
-        body: {
-          type: "object",
-          required: ["name", "email", "password", "role"],
-          properties: {
-            name: { type: "string" },
-            email: { type: "string", format: "email" },
-            password: { type: "string" },
-            role: { type: "string", enum: ["ORGANIZER", "CUSTOMER"] },
-          },
-        },
-      },
-    },
+    { schema: registerRouteSchema },
     async (request) => {
       const input = registerSchema.parse(request.body);
       const result = await authService.register(input);
@@ -35,19 +25,7 @@ export async function authRoutes(app: FastifyInstance) {
 
   app.post(
     "/login",
-    {
-      schema: {
-        tags: ["Auth"],
-        body: {
-          type: "object",
-          required: ["email", "password"],
-          properties: {
-            email: { type: "string", format: "email" },
-            password: { type: "string" },
-          },
-        },
-      },
-    },
+    { schema: loginRouteSchema },
     async (request) => {
       const input = loginSchema.parse(request.body);
       const result = await authService.login(input);
